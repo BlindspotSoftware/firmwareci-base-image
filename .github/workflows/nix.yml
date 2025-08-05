@@ -1,0 +1,34 @@
+name: Nix Flake CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Lint Nix code with statix
+        run: nix run .#statix -- check .
+
+      - name: Format check with nixpkgs-fmt
+        run: nix run .#nixpkgs-fmt -- --check .
+
+      - name: Flake check
+        run: nix flake check --show-trace
+
+      - name: Build base image
+        run: nix build .#base
+
+      - name: Build chipsec image
+        run: nix build .#chipsec

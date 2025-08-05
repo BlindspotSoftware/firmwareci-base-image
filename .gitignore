@@ -1,6 +1,10 @@
 # Ignore build outputs from performing a nix-build or `nix build` command
-result
-result-*
+result*
+base
+chipsec
 
 # Ignore automatically generated direnv output
 .direnv
+
+# Ignore hooks
+.pre-commit-config.yaml
