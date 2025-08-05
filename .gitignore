@@ -1,6 +1,12 @@
 # Ignore build outputs from performing a nix-build or `nix build` command
 result
 result-*
+base*
+test-image*
+
 
 # Ignore automatically generated direnv output
 .direnv
+
+# Ignore hooks
+.pre-commit-config.yaml
