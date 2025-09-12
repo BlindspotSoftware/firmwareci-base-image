@@ -7,7 +7,7 @@
 let
   pname = "default-tools";
   version = "v2";
-  sha256 = "sha256-8PTGQ4g3N/ZnfJ+bhRYGO94jsIf6T+WVFe6NtLiDZ+8=";
+  sha256 = "sha256-eowhwo60XAJWM+NYq8mgA+aw9lgMsf4aV/I6md0tPus=";
 in
 
 stdenv.mkDerivation {
