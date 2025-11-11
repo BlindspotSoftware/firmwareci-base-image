@@ -29,11 +29,14 @@
         fileSystems."/boot/EFI" = {
           device = "/dev/disk/by-label/ESP";
         };
-        firmwareci.base = {
-          sshAccess = {
-            user = "root";
-            key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcSD9iHnCrJXkSt7aGSnfL0tVHUm+x6/EDr/FchmBfu";
+        firmwareci = {
+          base = {
+            sshAccess = {
+              user = "root";
+              key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcSD9iHnCrJXkSt7aGSnfL0tVHUm+x6/EDr/FchmBfu";
+            };
           };
+          amdDebug.enable = true;
         };
       };
 
@@ -49,6 +52,7 @@
             version = "6.12.36";
             sha256 = "sha256-ShaK7S3lqBqt2QuisVOGCpjZm/w0ZRk24X8Y5U8Buow==";
           };
+          amdDebug.enable = true;
         };
       };
 

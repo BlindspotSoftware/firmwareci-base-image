@@ -4,6 +4,7 @@ with lib;
 
 let
   cfg = config.firmwareci.base;
+  amdDebugCfg = config.firmwareci.amdDebug;
 
   chipsecKernelVersion = "6.12.36";
   kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_6_12.override {
@@ -22,6 +23,8 @@ let
     kernel = kernelPackages.kernel;
     withDriver = true;
   };
+
+  amd-debug-tools = pkgs.python3Packages.callPackage ../pkgs/amd-debug-tools/default.nix { };
 
 in
 {
@@ -68,7 +71,14 @@ in
       default = true;
       description = "Include the default tools package in the image.";
     };
+  };
 
+  options.firmwareci.amdDebug = {
+    enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable AMD debug tools (amd-s2idle, amd-bios, amd-pstate, amd-ttm) with ethtool and edid-decode.";
+    };
   };
 
   config = {
@@ -100,24 +110,34 @@ in
       powertop
     ]
     ++ lib.optional cfg.includeChipSec chipsec
-    ++ lib.optional cfg.includeDefaultTools (pkgs.callPackage ../pkgs/default-tools/default.nix { });
+    ++ lib.optional cfg.includeDefaultTools (pkgs.callPackage ../pkgs/default-tools/default.nix { })
+    ++ lib.optionals amdDebugCfg.enable [
+      amd-debug-tools
+      ethtool
+      edid-decode
+    ];
 
     hardware.enableAllFirmware = cfg.enableAllFirmware;
 
-    services.openssh = mkIf (cfg.sshAccess.user != "" && cfg.sshAccess.key != "") {
-      enable = true;
-      settings.PermitRootLogin = if cfg.sshAccess.user == "root" then "yes" else "no";
+    services = {
+      openssh = mkIf (cfg.sshAccess.user != "" && cfg.sshAccess.key != "") {
+        enable = true;
+        settings.PermitRootLogin = if cfg.sshAccess.user == "root" then "yes" else "no";
+      };
+
+      fwupd = mkIf cfg.enableFwupd {
+        enable = true;
+        daemonSettings = lib.mkForce {
+          EspLocation = "/boot/EFI";
+        };
+      };
+
+      # Enable D-Bus system daemon for AMD debug tools
+      dbus.enable = mkIf amdDebugCfg.enable true;
     };
 
     users.users.${cfg.sshAccess.user} = mkIf (cfg.sshAccess.user != "" && cfg.sshAccess.key != "") {
       openssh.authorizedKeys.keys = [ cfg.sshAccess.key ];
-    };
-
-    services.fwupd = mkIf cfg.enableFwupd {
-      enable = true;
-      daemonSettings = lib.mkForce {
-        EspLocation = "/boot/EFI";
-      };
     };
   };
 }
