@@ -26,6 +26,10 @@ let
 
   amd-debug-tools = pkgs.python3Packages.callPackage ../pkgs/amd-debug-tools/default.nix { };
 
+  s0ix-selftest-tool = pkgs.callPackage ../pkgs/s0ix-selftest-tool/default.nix {
+    linuxPackages = config.boot.kernelPackages;
+  };
+
 in
 {
   options.firmwareci.base = {
@@ -102,13 +106,13 @@ in
       dmidecode
       fwts
       sbctl
-      s0ix-selftest-tool
       config.boot.kernelPackages.turbostat
       stress-ng
       sysbench
       bc
       powertop
     ]
+    ++ [ s0ix-selftest-tool ]
     ++ lib.optional cfg.includeChipSec chipsec
     ++ lib.optional cfg.includeDefaultTools (pkgs.callPackage ../pkgs/default-tools/default.nix { })
     ++ lib.optionals amdDebugCfg.enable [
