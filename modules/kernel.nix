@@ -11,12 +11,12 @@ in
   options.firmwareci.kernel = {
     version = mkOption {
       type = types.str;
-      default = "6.15.8";
+      default = "6.12.58";
       description = "Linux kernel version to use";
     };
     sha256 = mkOption {
       type = types.str;
-      default = "sha256-036SvBa5YqMCXfFWZHva2QsttP82x6YTeBf+ge8/KKY=";
+      default = "sha256-XxxMVGZgpqgQRv36YZUwa60sjRfA1ph23BAKha1GE6w=";
       description = "sha256 for the kernel tarball";
     };
     extraKernelModules = mkOption {
