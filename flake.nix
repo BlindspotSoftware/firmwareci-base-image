@@ -48,10 +48,6 @@
           base = {
             includeChipSec = true;
           };
-          kernel = {
-            version = "6.12.36";
-            sha256 = "sha256-ShaK7S3lqBqt2QuisVOGCpjZm/w0ZRk24X8Y5U8Buow==";
-          };
           amdDebug.enable = true;
         };
       };

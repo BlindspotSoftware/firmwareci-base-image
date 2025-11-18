@@ -6,21 +6,8 @@ let
   cfg = config.firmwareci.base;
   amdDebugCfg = config.firmwareci.amdDebug;
 
-  chipsecKernelVersion = "6.12.36";
-  kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_6_12.override {
-    argsOverride = rec {
-      kernelPatches = [ ];
-      version = chipsecKernelVersion;
-      modDirVersion = chipsecKernelVersion;
-      src = pkgs.fetchurl {
-        url = "mirror://kernel/linux/kernel/v${lib.versions.major version}.x/linux-${version}.tar.xz";
-        sha256 = "sha256-ShaK7S3lqBqt2QuisVOGCpjZm/w0ZRk24X8Y5U8Buow=";
-      };
-    };
-  });
-
   chipsec = pkgs.callPackage ../pkgs/chipsec/default.nix {
-    kernel = kernelPackages.kernel;
+    kernel = config.boot.kernelPackages.kernel;
     withDriver = true;
   };
 
@@ -68,7 +55,7 @@ in
     includeChipSec = mkOption {
       type = types.bool;
       default = false;
-      description = "Include chipsec with kernel module (only works with kernel <= 6.12)";
+      description = "Include chipsec with kernel module (uses the system kernel)";
     };
     includeDefaultTools = mkOption {
       type = types.bool;
