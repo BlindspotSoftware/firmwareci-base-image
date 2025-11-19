@@ -1,4 +1,4 @@
-TARGETS = base chipsec
+TARGETS = base
 
 all: $(TARGETS)
 

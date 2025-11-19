@@ -1,8 +1,8 @@
 # FirmwareCI Base Image
 
-This repository provides **modular, reproducible NixOS base images** for FirmwareCI and custom hardware testing. It is intended as a robust foundation for building your own NixOS-based CI images, offering flexible configuration of kernel, firmware, packages, and services. Each image includes essential default tooling, enabling your host machine to execute any FirmwareCI test step reliably.
+This repository provides **modular, reproducible NixOS base images** for FirmwareCI and custom hardware testing. It is intended as a foundation for building your own NixOS-based CI images, offering flexible configuration of kernel, firmware, packages, and services. Each image includes essential default tooling, enabling your host machine to execute any FirmwareCI test step reliably.
 
-**Note:** Chipsec requires an older kernel version for compatibility. To run the chipsec test step, use the provided chipsec configuration or image, which is preconfigured with the appropriate kernel.
+**Note:** Chipsec is compatible with kernel versions 6.16 and earlier. For kernel versions newer than 6.16, exclude chipsec from your builds by setting `includeChipSec = false`.
 
 For a comprehensive overview of available FirmwareCI commands and usage, refer to the [FirmwareCI Commands Reference](https://docs.firmware-ci.com/references/2_commands/index.html).
 
@@ -29,7 +29,6 @@ make all
 
 ```sh
 make base
-make chipsec
 ```
 
 ### Clean build outputs
@@ -38,16 +37,16 @@ make chipsec
 make clean
 ```
 
-The resulting images will be symlinked as `./base` and `./chipsec`.
+The resulting images will be symlinked as `./base`.
 
 ---
 
 ## Flake Structure
 
-- `flake.nix` – Flake entrypoint, exposes base and chipsec images as outputs.
+- `flake.nix` – Flake entrypoint, exposes base image and modules.
 - `modules/base.nix` – Base system options and configuration.
 - `modules/kernel.nix` – Kernel options and configuration.
-- `pkgs/default-tools/default.nix` – Default fwci testing tools package.
+- `pkgs/` – Package definitions (default-tools, chipsec, amd-debug-tools, etc.).
 - `Makefile` – Simple build automation for images.
 
 ---
@@ -107,7 +106,7 @@ You can override these options in your own configuration or flake:
 | `enableAllFirmware` | bool    | `true`                         | Enable all available firmware blobs.                |
 | `allowBroken`     | bool      | `true`                         | Allow installation of broken packages.              |
 | `allowUnfree`     | bool      | `true`                         | Allow installation of unfree packages.              |
-| `includeChipSec`  | bool      | `false`                        | Include chipsec with kernel module (<= 6.12 only).  |
+| `includeChipSec`  | bool      | `true`                         | Include chipsec with kernel module.                 |
 | `includeDefaultTools` | bool  | `true`                         | Include the default tools package in the image.     |
 
 #### `sshAccess` submodule
@@ -119,11 +118,12 @@ You can override these options in your own configuration or flake:
 
 ### **firmwareci.kernel options**
 
-| Option                    | Type                | Default   | Description                                                                                 |
-|---------------------------|---------------------|-----------|---------------------------------------------------------------------------------------------|
-| `version`                 | `str`               | `"6.15.8"`| Linux kernel version to use.                                                                |
-| `sha256`                  | `str`               | SRI hash  | sha256 hash for the kernel tarball (must be in SRI format, e.g. `sha256-...`).              |
-| `extraKernelModules`      | `list of str`       | `[]`      | Extra kernel modules to load at boot (e.g. `["dummy"]`).                                    |
+| Option                    | Type                | Default    | Description                                                                                 |
+|---------------------------|---------------------|------------|---------------------------------------------------------------------------------------------|
+| `version`                 | `str`               | `"6.12.58"`| Linux kernel version to use.                                                                |
+| `sha256`                  | `str`               | SRI hash   | SHA256 hash for the kernel tarball (must be in SRI format, e.g. `sha256-...`).              |
+| `extraKernelModules`      | `list of str`       | `[]`       | Extra kernel modules to load at boot (e.g. `["dummy"]`).                                    |
+| `includeIntelModules`     | `bool`              | `true`     | Include Intel-specific kernel modules (rapl, pmc, lpss).                                    |
 
 ---
 
@@ -153,16 +153,6 @@ transport: &transport
 
 **Caution:**  
 Do not enable this configuration on devices connected to publicly accessible networks, as it may expose your system to unauthorized access.
-
----
-
-## Structure
-
-- `flake.nix` – Flake entrypoint, exposes base and chipsec images.
-- `modules/base.nix` – Base system options and configuration.
-- `modules/kernel.nix` – Kernel options and configuration.
-- `pkgs/default-tools/default.nix` – Default fwci testing tools package.
-- `Makefile` – Simple build automation for images.
 
 ---
 
