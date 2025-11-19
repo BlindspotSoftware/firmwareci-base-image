@@ -29,6 +29,3 @@ jobs:
 
       - name: Build base image
         run: nix build .#base
-
-      - name: Build chipsec image
-        run: nix build .#chipsec
