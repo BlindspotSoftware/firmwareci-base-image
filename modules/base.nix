@@ -1,134 +1,142 @@
 { config, lib, pkgs, ... }:
 
-with lib;
-
 let
   cfg = config.firmwareci.base;
   amdDebugCfg = config.firmwareci.amdDebug;
-
-  chipsec = pkgs.callPackage ../pkgs/chipsec/default.nix {
-    kernel = config.boot.kernelPackages.kernel;
-    withDriver = true;
-  };
-
-  amd-debug-tools = pkgs.python3Packages.callPackage ../pkgs/amd-debug-tools/default.nix { };
-
-  s0ix-selftest-tool = pkgs.callPackage ../pkgs/s0ix-selftest-tool/default.nix {
-    linuxPackages = config.boot.kernelPackages;
-  };
-
+  hasSshAccess = cfg.sshAccess.user != "" && cfg.sshAccess.key != "";
 in
 {
   options.firmwareci.base = {
     sshAccess = {
-      user = mkOption {
-        type = types.str;
+      user = lib.mkOption {
+        type = lib.types.str;
         default = "";
         description = "SSH user for access.";
       };
-      key = mkOption {
-        type = types.str;
+      key = lib.mkOption {
+        type = lib.types.str;
         default = "";
         description = "SSH public key for access.";
       };
     };
-    enableFwupd = mkOption {
-      type = types.bool;
+
+    enableFwupd = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Enable fwupd service.";
     };
-    enableAllFirmware = mkOption {
-      type = types.bool;
+    enableAllFirmware = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Enable all firmware blobs.";
     };
-    allowBroken = mkOption {
-      type = types.bool;
+    allowBroken = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Allow installation of broken packages.";
     };
-    allowUnfree = mkOption {
-      type = types.bool;
+    allowUnfree = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Allow installation of unfree packages.";
     };
-    includeChipSec = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Include chipsec with kernel module (uses the system kernel)";
+    includeChipSec = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Include chipsec with kernel module (uses the system kernel).";
     };
-    includeDefaultTools = mkOption {
-      type = types.bool;
+    includeDefaultTools = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Include the default tools package in the image.";
     };
   };
 
   options.firmwareci.amdDebug = {
-    enable = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Enable AMD debug tools (amd-s2idle, amd-bios, amd-pstate, amd-ttm) with ethtool and edid-decode.";
-    };
+    enable = lib.mkEnableOption "AMD debug tools (amd-s2idle, amd-bios, amd-pstate, amd-ttm) with ethtool and edid-decode";
   };
 
-  config = {
-    boot.loader = {
-      efi = {
-        canTouchEfiVariables = false;
+  config = lib.mkMerge [
+    {
+      boot.loader = {
+        efi.canTouchEfiVariables = false;
+        grub.enable = false;
+        systemd-boot.enable = true;
       };
-      grub.enable = false;
-      systemd-boot.enable = true;
-    };
 
-    nixpkgs.config = {
-      allowBroken = mkDefault cfg.allowBroken;
-      allowUnfree = mkDefault cfg.allowUnfree;
-    };
+      nixpkgs.config = {
+        allowBroken = lib.mkDefault cfg.allowBroken;
+        allowUnfree = lib.mkDefault cfg.allowUnfree;
+      };
 
+      environment.systemPackages = with pkgs; [
+        acpica-tools
+        dmidecode
+        fwts
+        sbctl
+        config.boot.kernelPackages.turbostat
+        stress-ng
+        sysbench
+        bc
+        powertop
+        (callPackage ../pkgs/s0ix-selftest-tool/default.nix {
+          linuxPackages = config.boot.kernelPackages;
+        })
+      ];
 
-    environment.systemPackages = with pkgs; [
-      # FirmwareCI tools
-      acpica-tools
-      dmidecode
-      fwts
-      sbctl
-      config.boot.kernelPackages.turbostat
-      stress-ng
-      sysbench
-      bc
-      powertop
-    ]
-    ++ [ s0ix-selftest-tool ]
-    ++ lib.optional cfg.includeChipSec chipsec
-    ++ lib.optional cfg.includeDefaultTools (pkgs.callPackage ../pkgs/default-tools/default.nix { })
-    ++ lib.optionals amdDebugCfg.enable [
-      amd-debug-tools
-      ethtool
-      edid-decode
-    ];
+      hardware.enableAllFirmware = cfg.enableAllFirmware;
+    }
 
-    hardware.enableAllFirmware = cfg.enableAllFirmware;
-
-    services = {
-      openssh = mkIf (cfg.sshAccess.user != "" && cfg.sshAccess.key != "") {
+    # SSH access configuration
+    (lib.mkIf hasSshAccess {
+      services.openssh = {
         enable = true;
         settings.PermitRootLogin = if cfg.sshAccess.user == "root" then "yes" else "no";
       };
+      users.users.${cfg.sshAccess.user}.openssh.authorizedKeys.keys = [ cfg.sshAccess.key ];
+    })
 
-      fwupd = mkIf cfg.enableFwupd {
+    # fwupd service
+    (lib.mkIf cfg.enableFwupd {
+      services.fwupd = {
         enable = true;
         daemonSettings = lib.mkForce {
           EspLocation = "/boot/EFI";
         };
       };
+    })
 
-      # Enable D-Bus system daemon for AMD debug tools
-      dbus.enable = mkIf amdDebugCfg.enable true;
-    };
+    # ChipSec tools
+    (lib.mkIf cfg.includeChipSec {
+      environment.systemPackages = [
+        (pkgs.callPackage ../pkgs/chipsec/default.nix {
+          kernel = config.boot.kernelPackages.kernel;
+          withDriver = true;
+        })
+      ];
+    })
 
-    users.users.${cfg.sshAccess.user} = mkIf (cfg.sshAccess.user != "" && cfg.sshAccess.key != "") {
-      openssh.authorizedKeys.keys = [ cfg.sshAccess.key ];
-    };
-  };
+    # Default tools
+    (lib.mkIf cfg.includeDefaultTools (
+      let
+        defaultTools = pkgs.callPackage ../pkgs/default-tools/default.nix { };
+      in
+      {
+        environment.systemPackages = [ defaultTools ];
+        system.activationScripts.copyDefaultTools.text = ''
+          mkdir -p /root
+          cp -r ${defaultTools}/default-tools /root/
+        '';
+      }
+    ))
+
+    # AMD debug tools
+    (lib.mkIf amdDebugCfg.enable {
+      environment.systemPackages = [
+        (pkgs.python3Packages.callPackage ../pkgs/amd-debug-tools/default.nix { })
+        pkgs.ethtool
+        pkgs.edid-decode
+      ];
+    })
+  ];
 }

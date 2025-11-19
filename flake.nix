@@ -11,7 +11,6 @@
     let
       fsType = "ext4";
 
-      # The general base config for reuse
       baseConfig = { config, modulesPath, pkgs, ... }: {
         imports = [
           "${modulesPath}/profiles/base.nix"
@@ -20,33 +19,22 @@
           ./modules/base.nix
           ./modules/kernel.nix
         ];
+
         system.stateVersion = "25.05";
         time.timeZone = "Europe/Berlin";
-        fileSystems."/" = {
-          inherit fsType;
-          device = "/dev/disk/by-label/nixos";
-        };
-        fileSystems."/boot/EFI" = {
-          device = "/dev/disk/by-label/ESP";
-        };
-        firmwareci = {
-          base = {
-            sshAccess = {
-              user = "root";
-              key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcSD9iHnCrJXkSt7aGSnfL0tVHUm+x6/EDr/FchmBfu";
-            };
-          };
-          amdDebug.enable = true;
-        };
-      };
 
-      chipsecConfig = { config, modulesPath, pkgs, ... }: {
-        imports = [
-          baseConfig
-        ];
+        fileSystems = {
+          "/" = {
+            inherit fsType;
+            device = "/dev/disk/by-label/nixos";
+          };
+          "/boot/EFI".device = "/dev/disk/by-label/ESP";
+        };
+
         firmwareci = {
-          base = {
-            includeChipSec = true;
+          base.sshAccess = {
+            user = "root";
+            key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcSD9iHnCrJXkSt7aGSnfL0tVHUm+x6/EDr/FchmBfu";
           };
           amdDebug.enable = true;
         };
@@ -61,62 +49,45 @@
         };
     in
     {
-      modules = {
+      nixosModules = {
         base = import ./modules/base.nix;
         kernel = import ./modules/kernel.nix;
       };
 
-      inherit baseConfig chipsecConfig;
-    } // flake-utils.lib.eachSystem (with flake-utils.lib.system; [ x86_64-linux ])
-      (system:
-        let
-          pkgs = import nixpkgs {
+      inherit baseConfig;
+    } // flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+        nixosConfigurations = {
+          base = nixpkgs.lib.nixosSystem {
             inherit system;
+            modules = [ baseConfig ];
           };
-          nixosConfigurations = {
-            base = nixpkgs.lib.nixosSystem {
-              inherit system;
-              modules = [ baseConfig ];
-            };
+        };
+      in
+      {
+        checks.pre-commit-check = pre-commit-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            nixpkgs-fmt.enable = true;
+            statix.enable = true;
+          };
+        };
 
-            chipsec = nixpkgs.lib.nixosSystem {
-              inherit system;
-              modules = [ chipsecConfig ];
-            };
-          };
-        in
-        {
-          checks = {
-            pre-commit-check = pre-commit-hooks.lib.${system}.run {
-              src = ./.;
-              hooks = {
-                nixpkgs-fmt.enable = true;
-                statix.enable = true;
-              };
-            };
-          };
+        devShells.default = pkgs.mkShell {
+          packages = [ pkgs.statix ];
+          shellHook = self.checks.${system}.pre-commit-check.shellHook;
+        };
 
-          devShells.default = pkgs.mkShell {
-            packages = with pkgs; [ statix ];
-            shellHook = ''
-              ${self.checks.${system}.pre-commit-check.shellHook}
-            '';
+        packages = {
+          inherit (pkgs) statix nixpkgs-fmt;
+
+          base = generateDiskImage {
+            inherit fsType pkgs;
+            inherit (nixosConfigurations.base) config;
           };
 
-          packages = {
-            inherit (pkgs) statix nixpkgs-fmt;
-
-            base = generateDiskImage {
-              inherit fsType pkgs;
-              inherit (nixosConfigurations.base) config;
-            };
-
-            chipsec = generateDiskImage {
-              inherit fsType pkgs;
-              inherit (nixosConfigurations.chipsec) config;
-            };
-          };
-
-          defaultPackage = self.packages.${system}.base;
-        });
+          default = self.packages.${system}.base;
+        };
+      });
 }
