@@ -6,6 +6,7 @@
 , nasm
 , python3
 , withDriver ? false
+, makeWrapper
 ,
 }:
 
@@ -29,6 +30,7 @@ python3.pkgs.buildPythonApplication rec {
 
   nativeBuildInputs = [
     nasm
+    makeWrapper
   ]
   ++ lib.optionals (lib.meta.availableOn stdenv.buildPlatform elfutils) [
     elfutils
@@ -44,6 +46,32 @@ python3.pkgs.buildPythonApplication rec {
   preBuild = lib.optionals (!withDriver) ''
     touch README.NO_KERNEL_DRIVER
   '';
+
+  # Replace module_ids.json with a symlink to a writable location
+  postInstall =
+    let
+      module_ids = "/var/lib/chipsec/module_ids.json";
+      module_ids_default = "${placeholder "out"}/${python3.pkgs.python.sitePackages}/chipsec/library/module_ids_default.json";
+      createModuleIdsFile = ''
+        if [ ! -e ${module_ids} ]; then
+          mkdir -p $(dirname ${module_ids})
+          cp ${module_ids_default} ${module_ids}
+        fi
+      '';
+    in
+    ''
+      # Rename original module_ids.json to module_ids_default.json
+      mv $out/${python3.pkgs.python.sitePackages}/chipsec/library/module_ids.json \
+         $out/${python3.pkgs.python.sitePackages}/chipsec/library/module_ids_default.json
+
+      # Create symlink to writable location
+      ln -s ${module_ids} $out/${python3.pkgs.python.sitePackages}/chipsec/library/module_ids.json
+
+      # Wrap chipsec_main to ensure the writable file exists
+      mv $out/bin/chipsec_main $out/bin/.chipsec_main-wrapped
+      makeWrapper $out/bin/.chipsec_main-wrapped $out/bin/chipsec_main \
+        --run '${createModuleIdsFile}'
+    '';
 
   nativeCheckInputs = with python3.pkgs; [
     distro
