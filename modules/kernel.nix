@@ -28,6 +28,18 @@ in
       default = true;
       description = "Intel-specific kernel modules (rapl, pmc, lpss).";
     };
+
+    kernelPatches = lib.mkOption {
+      type = lib.types.listOf lib.types.attrs;
+      default = [ ];
+      description = "List of kernel patches to apply. Each patch should have 'name' and 'patch' attributes.";
+      example = lib.literalExpression ''[
+        {
+          name = "my-patch";
+          patch = ./my-patch.patch;
+        }
+      ]'';
+    };
   };
 
   config = {
@@ -39,6 +51,7 @@ in
           url = "mirror://kernel/linux/kernel/v${lib.versions.major version}.x/linux-${version}.tar.xz";
           sha256 = cfg.sha256;
         };
+        kernelPatches = cfg.kernelPatches;
       };
     });
 

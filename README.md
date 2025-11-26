@@ -77,6 +77,12 @@ You can use this flake as a base for your own NixOS image or configuration.
           version = "6.6.7";
           sha256 = "...";
           extraKernelModules = [ "dummy" "loop" ];
+          kernelPatches = [
+            {
+              name = "my-custom-patch";
+              patch = ./path/to/my-patch.patch;
+            }
+          ];
         };
       };
     in {
@@ -124,6 +130,7 @@ You can override these options in your own configuration or flake:
 | `sha256`                  | `str`               | SRI hash   | SHA256 hash for the kernel tarball (must be in SRI format, e.g. `sha256-...`).              |
 | `extraKernelModules`      | `list of str`       | `[]`       | Extra kernel modules to load at boot (e.g. `["dummy"]`).                                    |
 | `includeIntelModules`     | `bool`              | `true`     | Include Intel-specific kernel modules (rapl, pmc, lpss).                                    |
+| `kernelPatches`           | `list of attrs`     | `[]`       | List of kernel patches to apply. Each patch should have `name` and `patch` attributes.      |
 
 ---
 
