@@ -52,6 +52,12 @@ in
           sha256 = cfg.sha256;
         };
         kernelPatches = cfg.kernelPatches;
+        ignoreConfigErrors = true;
+        structuredExtraConfig = with lib.kernel; {
+          # Disable /dev/mem restrictions for firmware testing
+          STRICT_DEVMEM = no;
+          IO_STRICT_DEVMEM = no;
+        };
       };
     });
 
