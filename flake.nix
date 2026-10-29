@@ -55,9 +55,10 @@
       };
 
       inherit baseConfig;
-    } // flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
+    } // flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (system:
       let
         pkgs = import nixpkgs { inherit system; };
+
         nixosConfigurations = {
           base = nixpkgs.lib.nixosSystem {
             inherit system;
