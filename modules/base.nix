@@ -42,8 +42,8 @@ in
     };
     includeChipSec = lib.mkOption {
       type = lib.types.bool;
-      default = true;
-      description = "Include chipsec with kernel module (uses the system kernel).";
+      default = pkgs.stdenv.hostPlatform.isx86_64;
+      description = "Include chipsec with kernel module (x86_64 only, uses the system kernel).";
     };
     includeDefaultTools = lib.mkOption {
       type = lib.types.bool;
@@ -74,11 +74,12 @@ in
         dmidecode
         fwts
         sbctl
-        config.boot.kernelPackages.turbostat
         stress-ng
         sysbench
         bc
         powertop
+      ] ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
+        config.boot.kernelPackages.turbostat
         (callPackage ../pkgs/s0ix-selftest-tool/default.nix {
           linuxPackages = config.boot.kernelPackages;
         })

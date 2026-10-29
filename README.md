@@ -28,7 +28,8 @@ make all
 ### Build a Specific Image
 
 ```sh
-make base
+make base-x86_64
+make base-aarch64
 ```
 
 ### Clean build outputs
@@ -37,7 +38,7 @@ make base
 make clean
 ```
 
-The resulting images will be symlinked as `./base`.
+The resulting images will be symlinked as `./base-x86_64` and `./base-aarch64`.
 
 ---
 
