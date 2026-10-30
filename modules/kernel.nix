@@ -43,28 +43,32 @@ in
   };
 
   config = {
-    boot.kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_latest.override {
-      argsOverride = rec {
-        inherit (cfg) version;
-        modDirVersion = version;
-        src = pkgs.fetchurl {
-          url = "mirror://kernel/linux/kernel/v${lib.versions.major version}.x/linux-${version}.tar.xz";
-          sha256 = cfg.sha256;
-        };
-        kernelPatches = cfg.kernelPatches;
-      };
-    });
+    boot = {
+      kernelParams = [ "iomem=relaxed" ];
 
-    boot.kernelModules = lib.mkMerge [
-      [ "msr" ]
-      (lib.mkIf cfg.includeIntelModules [
-        "intel_rapl_common"
-        "intel_pmc_core"
-        "intel_lpss"
-        "intel_lpss_pci"
-        "intel_lpss_acpi"
-      ])
-      cfg.extraKernelModules
-    ];
+      kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_latest.override {
+        argsOverride = rec {
+          inherit (cfg) version;
+          modDirVersion = version;
+          src = pkgs.fetchurl {
+            url = "mirror://kernel/linux/kernel/v${lib.versions.major version}.x/linux-${version}.tar.xz";
+            sha256 = cfg.sha256;
+          };
+          kernelPatches = cfg.kernelPatches;
+        };
+      });
+
+      kernelModules = lib.mkMerge [
+        [ "msr" ]
+        (lib.mkIf cfg.includeIntelModules [
+          "intel_rapl_common"
+          "intel_pmc_core"
+          "intel_lpss"
+          "intel_lpss_pci"
+          "intel_lpss_acpi"
+        ])
+        cfg.extraKernelModules
+      ];
+    };
   };
 }
