@@ -147,6 +147,12 @@ users.users.root.openssh.authorizedKeys.keys = [
 
 This configuration allows FirmwareCI to securely connect to your device via SSH using a preconfigured key at `/root/.ssh/fwci` inside the test environment. You may also customize the SSH access settings to suit your specific requirements.
 
+The matching private key is public in [`keys/fwci`](keys/fwci), so you can log in to a test image yourself:
+
+```sh
+ssh -i keys/fwci root@<host>
+```
+
 Example SSH transport configuration for FirmwareCI to connect to the machine:
 
 ```yaml
