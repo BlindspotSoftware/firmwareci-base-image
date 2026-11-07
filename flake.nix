@@ -23,6 +23,12 @@
         system.stateVersion = "25.05";
         time.timeZone = "Europe/Berlin";
 
+        # Keep the nixpkgs flake source ("source") out of the system closure.
+        nixpkgs.flake = {
+          setFlakeRegistry = false;
+          setNixPath = false;
+        };
+
         fileSystems = {
           "/" = {
             inherit fsType;
@@ -46,6 +52,7 @@
           inherit (nixpkgs) lib;
           partitionTableType = "efi";
           additionalSpace = "0";
+          copyChannel = false;
         };
     in
     {
