@@ -28,7 +28,10 @@
             inherit fsType;
             device = "/dev/disk/by-label/nixos";
           };
-          "/boot/EFI".device = "/dev/disk/by-label/ESP";
+          "/boot/EFI" = {
+            device = "/dev/disk/by-label/ESP";
+            fsType = "vfat";
+          };
         };
 
         firmwareci = {
