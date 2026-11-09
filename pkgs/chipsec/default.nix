@@ -24,6 +24,7 @@ python3.pkgs.buildPythonApplication rec {
 
   patches = [
     ./log-path.diff
+    ./kernel-6-19-support.patch
   ];
 
   KSRC = lib.optionalString withDriver "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build";
