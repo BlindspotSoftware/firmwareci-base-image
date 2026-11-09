@@ -7,13 +7,13 @@ in
   options.firmwareci.kernel = {
     version = lib.mkOption {
       type = lib.types.str;
-      default = "6.12.58";
+      default = "6.18.62";
       description = "Linux kernel version to use.";
     };
 
     sha256 = lib.mkOption {
       type = lib.types.str;
-      default = "sha256-XxxMVGZgpqgQRv36YZUwa60sjRfA1ph23BAKha1GE6w=";
+      default = "sha256-SQp67fGzVcVl06bAUzPMzLXaggZOyka1kESKcJnX1lE=";
       description = "SHA256 hash for the kernel tarball.";
     };
 
