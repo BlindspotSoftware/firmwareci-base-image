@@ -2,8 +2,6 @@
 
 This repository provides **modular, reproducible NixOS base images** for FirmwareCI and custom hardware testing. It is intended as a foundation for building your own NixOS-based CI images, offering flexible configuration of kernel, firmware, packages, and services. Each image includes essential default tooling, enabling your host machine to execute any FirmwareCI test step reliably.
 
-**Note:** Chipsec is compatible with kernel versions 6.16 and earlier. For kernel versions newer than 6.16, exclude chipsec from your builds by setting `includeChipSec = false`.
-
 For a comprehensive overview of available FirmwareCI commands and usage, refer to the [FirmwareCI Commands Reference](https://docs.firmware-ci.com/references/2_commands/index.html).
 
 ## Features
