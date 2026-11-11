@@ -23,6 +23,9 @@
         system.stateVersion = "25.05";
         time.timeZone = "Europe/Berlin";
 
+        # profiles/base.nix enables ZFS, but the image root is ext4.
+        boot.supportedFilesystems.zfs = false;
+
         # Keep the nixpkgs flake source ("source") out of the system closure.
         nixpkgs.flake = {
           setFlakeRegistry = false;
