@@ -101,12 +101,12 @@
 
           default = self.packages.${system}.base;
         } // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
-          # Image tooling stays aarch64, but the VM runs the x86_64 host's QEMU (TCG).
+          # Image tooling stays aarch64; the VM runs the host's QEMU (TCG), and vmTools sets -m and -smp (from nix --cores).
           base-aarch64 = generateDiskImage {
             inherit fsType;
             pkgs = nixpkgs.legacyPackages.aarch64-linux.extend (_final: prev: {
               vmTools = prev.vmTools.override {
-                customQemu = "${pkgs.qemu}/bin/qemu-system-aarch64 -machine virt -cpu cortex-a53 -m 8G -nographic --accel tcg,thread=multi -smp 8 ";
+                customQemu = "${pkgs.qemu}/bin/qemu-system-aarch64 -machine virt -cpu cortex-a53 --accel tcg,thread=multi";
               };
             });
             inherit (nixosConfigurations.base-aarch64) config;
