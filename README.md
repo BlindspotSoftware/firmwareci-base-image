@@ -18,6 +18,7 @@ For a comprehensive overview of available FirmwareCI commands and usage, refer t
 ### Prerequisites
 
 - [Nix](https://nixos.org/download.html) with flakes enabled (`experimental-features = nix-command flakes` in your `nix.conf`).
+- For `base-aarch64` on an x86_64 host: aarch64 emulation through binfmt. On NixOS, set `boot.binfmt.emulatedSystems = [ "aarch64-linux" ];`. On other distributions, register the qemu-user-static binfmt handlers and add `extra-platforms = aarch64-linux` to your `nix.conf`. Packages that are not in the binary cache, the kernel included, then compile under emulation, which is slow.
 
 ### Build All Images
 
@@ -31,6 +32,8 @@ make all
 make base-x86_64
 make base-aarch64
 ```
+
+On an x86_64 host, `make base-aarch64` runs `nix build .#base-aarch64 --cores 8`. Keep `--cores 8` when you call `nix build` directly: the image VM gets one emulated vCPU per build core, and many emulated vCPUs make the build slower.
 
 ### Clean build outputs
 
@@ -113,7 +116,7 @@ You can override these options in your own configuration or flake:
 | `enableAllFirmware` | bool    | `true`                         | Enable all available firmware blobs.                |
 | `allowBroken`     | bool      | `true`                         | Allow installation of broken packages.              |
 | `allowUnfree`     | bool      | `true`                         | Allow installation of unfree packages.              |
-| `includeChipSec`  | bool      | `true`                         | Include chipsec with kernel module.                 |
+| `includeChipSec`  | bool      | `true` on x86_64, else `false` | Include chipsec with kernel module (x86_64 only).   |
 | `includeDefaultTools` | bool  | `true`                         | Include the default tools package in the image.     |
 
 #### `sshAccess` submodule
