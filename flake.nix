@@ -42,7 +42,7 @@
             user = "root";
             key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcSD9iHnCrJXkSt7aGSnfL0tVHUm+x6/EDr/FchmBfu";
           };
-          amdDebug.enable = true;
+          amdDebug.enable = pkgs.stdenv.hostPlatform.isx86_64;
         };
       };
 
