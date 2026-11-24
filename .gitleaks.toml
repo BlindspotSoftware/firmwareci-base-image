@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+# The key test images trust. It is public on purpose, see README.md.
+[[allowlists]]
+paths = ['''^keys/fwci$''']

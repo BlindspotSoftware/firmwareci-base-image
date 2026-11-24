@@ -1,0 +1,6 @@
+name: hygiene
+on: [push, pull_request]
+jobs:
+  hygiene:
+    uses: BlindspotSoftware/.github/.github/workflows/hygiene.yml@main
+    secrets: inherit
